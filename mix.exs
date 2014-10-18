@@ -9,7 +9,8 @@ defmodule Poolparty.Mixfile do
   end
 
   def application do
-    [applications: [:logger]]
+    [applications: [:logger],
+     env: [pool_size: -1]]
   end
 
   defp deps do
