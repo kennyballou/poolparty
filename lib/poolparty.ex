@@ -1,2 +1,2 @@
-defmodule Poolparty do
+defmodule PoolParty do
 end
