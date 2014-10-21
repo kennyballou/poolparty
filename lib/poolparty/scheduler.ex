@@ -2,20 +2,21 @@ defmodule PoolParty.Scheduler do
   use GenServer
   require Logger
 
-  def start_link(pool_size, opts \\ []) do
+  def start_link(pool_size, event_manager, opts \\ []) do
     Logger.debug("[#{__MODULE__}]: Starting Pool Scheduler")
     GenServer.start_link(
       __MODULE__,
-      {pool_size},
+      {pool_size, event_manager},
       [name: __MODULE__] ++ opts)
   end
 
-  def init({pool_size}) do
+  def init({pool_size, event_manager}) do
     Logger.debug("[#{__MODULE__}]: Initializing Pool Scheduler")
     {:ok, %{max_pool_size: pool_size,
             workers: [],
             queue: [],
-            processing: HashDict.new()}
+            processing: HashDict.new(),
+            events: event_manager}
     }
   end
 
@@ -36,6 +37,7 @@ defmodule PoolParty.Scheduler do
 
   def handle_cast({:process, func, args, from}, state) do
     Logger.debug("[#{__MODULE__}]: Work request received")
+    GenEvent.notify(state.events, {:work_queued, func, args, from})
     queue = state.queue ++ [{func, args, from}]
     case length(state.workers) do
       0 ->
@@ -54,11 +56,13 @@ defmodule PoolParty.Scheduler do
 
   def handle_cast({:join, pid}, state) do
     Logger.debug("[#{__MODULE__}]: Worker joined pool")
+    GenEvent.notify(state.events, {:worker_joining, pid})
     {:noreply, %{state| workers: [pid | state.workers]}}
   end
 
   def handle_cast({:leave, pid}, state) do
     Logger.debug("[#{__MODULE__}]: Worker left pool")
+    GenEvent.notify(state.events, {:worker_leaving, pid})
     {:noreply, %{state| workers: state.workers -- [pid]}}
   end
 

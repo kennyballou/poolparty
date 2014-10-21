@@ -2,15 +2,15 @@ defmodule PoolParty.Pool.Worker do
   use GenServer
   require Logger
 
-  def start_link(opts \\ []) do
+  def start_link(event_manager, opts \\ []) do
     Logger.debug("[#{__MODULE__}]: Starting worker")
-    GenServer.start_link(__MODULE__, {}, opts)
+    GenServer.start_link(__MODULE__, {event_manager}, opts)
   end
 
-  def init(_) do
+  def init({event_manager}) do
     Logger.debug("[#{__MODULE__}]: Initializing Worker")
     PoolParty.Scheduler.join(self)
-    {:ok, nil}
+    {:ok, %{events: event_manager}}
   end
 
   def process(pid, function, args) do
@@ -18,10 +18,10 @@ defmodule PoolParty.Pool.Worker do
     GenServer.cast(pid, {:compute, function, args})
   end
 
-  def handle_cast({:compute, function, args}, _) do
+  def handle_cast({:compute, function, args}, state) do
     Logger.debug("[#{__MODULE__}]: Process request received")
     PoolParty.Scheduler.ready({:result, function.(args), self})
-    {:noreply, nil}
+    {:noreply, state}
   end
 
 end
