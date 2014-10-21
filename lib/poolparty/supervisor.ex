@@ -15,7 +15,8 @@ defmodule PoolParty.Supervisor do
     pool_size = Application.get_env(:poolparty, :pool_size)
     Logger.debug("[#{__MODULE__}]: Pool size: #{pool_size}")
     children = [worker(PoolParty.Scheduler, [pool_size, event_manager]),
-                worker(PoolParty.Pool.Supervisor, [pool_size, event_manager])]
+                supervisor(PoolParty.Pool.Supervisor,
+                           [pool_size, event_manager])]
     supervise(children, strategy: :one_for_one)
   end
 end
