@@ -30,6 +30,11 @@ defmodule PoolParty.Scheduler do
     GenServer.cast(__MODULE__, {:ready, result, worker_pid})
   end
 
+  def leave(worker_pid) do
+    Logger.debug("[#{__MODULE__}]: Worker leaving pool")
+    GenServer.cast(__MODULE__, {:leave, worker_pid})
+  end
+
   def process(func, args, from) do
     Logger.debug("[#{__MODULE__}]: Casting work request")
     GenServer.cast(__MODULE__, {:process, func, args, from})
