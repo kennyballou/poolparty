@@ -68,7 +68,15 @@ defmodule PoolParty.Scheduler do
   def handle_cast({:leave, pid}, state) do
     Logger.debug("[#{__MODULE__}]: Worker left pool")
     GenEvent.notify(state.events, {:worker_leaving, pid})
-    {:noreply, %{state| workers: state.workers -- [pid]}}
+    processing = case HashDict.pop(state.processing, pid) do
+      {nil, processing} ->
+        processing
+      {client, processing} ->
+        send(client, {:result, :failed})
+        processing
+    end
+    {:noreply, %{state| workers: state.workers -- [pid],
+                 processing: processing}}
   end
 
   def handle_cast({:ready, result, pid}, state) do
