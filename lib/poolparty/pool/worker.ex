@@ -24,4 +24,10 @@ defmodule PoolParty.Pool.Worker do
     {:noreply, state}
   end
 
+  def terminate(reason, state) do
+    Logger.debug("[#{__MODULE__}]: Pool Worker terminating")
+    PoolParty.Scheduler.leave(self())
+    super(reason, state)
+  end
+
 end
