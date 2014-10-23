@@ -3,7 +3,10 @@ defmodule PoolPartyTest do
 
   setup do
     {:ok, pool} = PoolParty.start(nil, nil)
-    on_exit(pool, fn -> Application.stop(pool) end)
+    on_exit(pool, fn ->
+      Application.stop(pool)
+      :timer.sleep(100)
+    end)
     {:ok, pool: pool}
   end
 
